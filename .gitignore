@@ -7,4 +7,6 @@ chromedriver-win64
 12.15.2_0
 playwrightauto
 Lib
-
+.idea
+include
+Scripts
