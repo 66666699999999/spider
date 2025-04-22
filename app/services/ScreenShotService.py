@@ -1,14 +1,15 @@
 import asyncio
-import re
 import json
+import time
 from playwright.async_api import Playwright, async_playwright, expect
-PATHPIC = "../public/pic/test.png"
-#COOKIE = r"D:\pycha\autoWeb3\public\x.com_json_1745050541527.json"
-COOKIE = "../public/x.com_json_1745050541527.json"
+from app.config.load_config import Config
 
+config = Config()
+child_path = config.load_file()
 
 def load_cookie():
-    with open(COOKIE, "r", encoding="utf-8") as f:
+    path = config.ROOT_PATH / child_path["paths"]["cookie"]
+    with open(path, "r", encoding="utf-8") as f:
         cookies = json.load(f)
 
         # 如果没有指定或指定错误的 sameSite 则删除 sameSite 元素
@@ -29,12 +30,13 @@ async def run(playwright: Playwright, url) -> None:
     page =  await context.new_page()
     await page.goto(url)
     try:
-        await expect(page.locator('article').nth(0)).to_be_visible(timeout=100000)
+        await expect(page.locator('article').nth(0)).to_be_visible(timeout=200000)
         count =  await page.locator("article").count()
         article = page.locator("article").first
         await article.locator("xpath=../../..").first.evaluate("(element) => element.remove()")
         target = page.locator("article").first
-        await target.screenshot(path=PATHPIC)
+        path = config.ROOT_PATH / child_path["paths"]["screenshot"] / f"{time.time():.0f}.png"
+        await target.screenshot(path=path, type="png")
     except Exception as e:
         print(e)
 
