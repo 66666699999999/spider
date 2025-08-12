@@ -1,25 +1,28 @@
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse,JSONResponse
-from app.services.ScreenShotService import main
+from fastapi.responses import FileResponse, JSONResponse
+from app.services.screen_shot_service import main
 import os
 from app.config.load_config import Config
 
-routerss = APIRouter()
-
+router = APIRouter()
 config = Config()
 
-@routerss.get("/screenshot")
-async def screen_shot(url: str):
+@router.get("/screenshot")
+async def screen_shot(url: str) -> JSONResponse:
     await main(url)
-    child_path = config.load_file()
-    PATHPIC = config.ROOT_PATH / child_path["paths"]["screenshot"]
-    if os.path.exists(PATHPIC):
+    config_data = config.load_file()
+    screenshot_path = config.ROOT_PATH / config_data["paths"]["screenshot"]
+    if os.path.exists(screenshot_path):
         return JSONResponse(
-            content={"message": "", "status": "sucess"},
+            content={"message": "Screenshot captured successfully", "status": "success"},
             status_code=200
         )
     return HTTPException(detail="Failed to capture screenshot", status_code=500)
 
-@routerss.get("/pic")
-async def get_pic():
-    return FileResponse(path=PATHPIC,media_type="image/png")
+@router.get("/pic")
+async def get_pic() -> FileResponse:
+    config_data = config.load_file()
+    screenshot_path = config.ROOT_PATH / config_data["paths"]["screenshot"]
+    if os.path.exists(screenshot_path):
+        return FileResponse(path=screenshot_path, media_type="image/png")
+    raise HTTPException(detail="Screenshot not found", status_code=404)

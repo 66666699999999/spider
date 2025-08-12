@@ -1,3 +1,6 @@
 [paths]
 screenshot = "public/pic"
-cookie = "public/x.com_json_1745050541527.json"
+cookie = "public/x.com_json_1754992608916.json"
+
+[database]
+url = "postgresql://postgres:password@localhost/spider_db"
