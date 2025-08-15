@@ -1,23 +1,21 @@
-from fastapi import FastAPI
-from app.api.router import router
-from app.api.task_router import router as task_router
+import logging
+
 import uvicorn
-import os
-from pathlib import Path
 
-# 数据库初始化
-from app.database.database import engine
-from app.database.models import Base
+from app.api.router import app
 
-# 创建数据库表
-Base.metadata.create_all(bind=engine)
+# 配置日志
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-FILE = Path(__file__).resolve()
-project_root = FILE.parents[1]
-
-app = FastAPI(title="Auto work API")
-app.include_router(router)
-app.include_router(task_router)
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, log_level="info")
+    logger.info("Starting application server...")
+    # 启动服务器
+    uvicorn.run(
+        "app.main:app",
+        host="127.0.0.1",
+        port=8000,
+        log_level="info",
+        timeout_keep_alive=30,
+    )

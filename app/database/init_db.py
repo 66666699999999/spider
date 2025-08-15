@@ -1,4 +1,4 @@
-from app.database.database import engine, Base
+from app.database.database import Base, engine
 from app.database.models import Task
 
 # 创建所有表

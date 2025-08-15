@@ -1,6 +1,25 @@
-[paths]
-screenshot = "public/pic"
-cookie = "public/x.com_json_1754992608916.json"
+# 是否使用SSH隧道连接数据库
+USE_SSH_TUNNEL = true
 
+# 直接数据库连接配置 (不使用SSH隧道时)
+[direct_database]
+url = ""
+
+# SSH 配置
+[ssh]
+host = "154.12.62.80"
+port = 22
+username = "root"
+password = "1khGJp8bzBPJ"  # 取消注释并设置密码
+# key_path = "/path/to/yo ur/private/key"  # 取消注释并设置私钥路径
+
+# 数据库配置 (通过 SSH 隧道访问的远程数据库)
 [database]
-url = "postgresql://postgres:password@localhost/spider_db"
+# 注意：当使用SSH隧道时，实际连接会通过本地隧道端口转发到这个远程数据库
+user = "kline_user"
+password = "your_password"
+name = "spider_db"
+remote_host = "127.0.0.1"
+remote_port = 5432
+# 通过SSH隧道连接时使用的URL模板
+# url = "postgresql://{user}:{password}@{remote_host}:{remote_port}/{name}"

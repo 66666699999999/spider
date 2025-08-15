@@ -12,3 +12,12 @@ include
 Scripts
 1745308916.png
 __pycache__/
+venv/
+.env
+run_tests.py
+pytest.ini
+.coverage
+tests/
+database_ssh.py
+.ruff_cache/
+.pytest_cache/
