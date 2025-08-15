@@ -23,12 +23,6 @@ RUN pip install --upgrade pip && \
 # 配置Poetry不创建虚拟环境
 RUN poetry config virtualenvs.create false
 
-# 复制依赖文件
-COPY pyproject.toml poetry.lock* ./
-
-# 安装依赖
-RUN poetry install --no-interaction --no-ansi
-
 # 如果没有poetry.lock文件，则使用requirements.txt
 COPY requirements.txt .
 RUN pip install -r requirements.txt
@@ -38,17 +32,20 @@ COPY . .
 
 # 创建配置文件（如果不存在）
 RUN if [ ! -f app/config/config.toml ]; then \
-    cp app/config/config.example.toml app/config/config.toml; \
-fi
+        cp app/config/config.example.toml app/config/config.toml; \
+    fi
 
 # 生成加密密钥（首次运行时）
-RUN python -c "import os; from cryptography.fernet import Fernet; \
-key_path = 'app/config/secret.key'; \
-if not os.path.exists(key_path): \
-    with open(key_path, 'wb') as f: \
-        f.write(Fernet.generate_key()); \
-    os.chmod(key_path, 0o600); \
-print('Encryption key generated or exists')"
+RUN python <<EOF
+import os; 
+from cryptography.fernet import Fernet; 
+key_path = 'app/config/secret.key'; 
+if not os.path.exists(key_path): 
+    with open(key_path, 'wb') as f: 
+        f.write(Fernet.generate_key()); 
+    os.chmod(key_path, 0o600); 
+print('Encryption key generated or exists')
+EOF
 
 # 暴露端口
 EXPOSE 8000

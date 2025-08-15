@@ -46,10 +46,7 @@ class DatabaseManager:
 
         try:
             # 创建数据库引擎
-            db_url = get_setting(
-                "DATABASE_URL",
-                "postgresql+asyncpg://postgres:postgres@localhost:5432/spider_db",
-            )
+            db_url = os.environ.get("DATABASE_URL")
             logger.info(f"Connecting to database: {self._obfuscate_url(db_url)}")
 
             self.engine = create_async_engine(
