@@ -3,7 +3,7 @@ version: '3.8'
 services:
   web:
     build: .
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    command: sh -c "npm install && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     volumes:
       - .:/app
       - ./app/config:/app/app/config
@@ -13,6 +13,7 @@ services:
       - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/spider_db
       - SECRET_KEY=${SECRET_KEY}
       - DEBUG=False
+      - NODE_PATH=/usr/bin/node
     depends_on:
       - db
     restart: unless-stopped

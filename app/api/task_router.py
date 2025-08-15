@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.database.models import Task as DBTask
-from app.schemas.task import Task, TaskCreate
+from app.schemas.task import TaskCreate, TaskResponse
 from app.services.task_logic_service import TaskLogicService
 from app.services.task_service import get_running_tasks
 
@@ -15,9 +15,13 @@ from app.services.task_service import get_running_tasks
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
-@router.get("/running")
+@router.get("/running", response_model=List[Dict[str, Any]])
 async def get_running_tasks_endpoint():
-    """获取所有正在运行的定时任务"""
+    """获取正在运行的定时任务
+
+    Returns:
+        正在运行的任务列表
+    """
     return get_running_tasks()
 
 
@@ -31,12 +35,20 @@ async def list_tasks(db: Session = Depends(get_db)) -> List[Task]:
 
 
 # 同时支持带和不带斜杠的URL格式
-@router.post("/")
+@router.post("/", response_model=TaskResponse)
 @router.post("", include_in_schema=False)
 async def create_task(
     task: TaskCreate = Body(...), db: Session = Depends(get_db)
-) -> Task:
-    """创建新的定时任务"""
+) -> TaskResponse:
+    """创建新的定时任务
+
+    Args:
+        task: 任务创建请求体，包含spider_id、cron_expression和description
+        db: 数据库会话
+
+    Returns:
+        创建的任务信息
+    """
     # 验证cron表达式
     if not TaskLogicService.validate_cron_expression(task.cron_expression):
         raise HTTPException(
@@ -62,9 +74,17 @@ async def get_task(task_id: int, db: Session = Depends(get_db)) -> Task:
     return task
 
 
-@router.delete("/{task_id}")
-async def delete_task(task_id: int, db: Session = Depends(get_db)) -> Dict[str, str]:
-    """删除指定ID的定时任务"""
+@router.delete("/{task_id}", response_model=Dict[str, Any])
+async def delete_task(task_id: int, db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """删除定时任务
+
+    Args:
+        task_id: 任务ID
+        db: 数据库会话
+
+    Returns:
+        删除结果
+    """
     try:
         return await TaskLogicService.delete_existing_task(task_id, db)
     except ValueError as e:

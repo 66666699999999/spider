@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession  # 导入 AsyncSession 类型提
 
 # --- 内部导入 ---
 from app.database.models import Task as DBTask  # 确保模型导入正确
+from app.services.spider_logic_service import SpiderLogicService
 from app.schemas.task import TaskCreate  # 确保 Pydantic 模型导入正确
 from app.services.task_service import remove_task, schedule_task  # 确保调度服务导入正确
 
@@ -51,24 +52,29 @@ class TaskLogicService:
     @staticmethod
     async def create_new_task(task: TaskCreate, db: AsyncSession) -> DBTask:
         """创建新任务"""
-        # 1. 创建数据库任务对象 (这一步是同步的)
+        # 1. 验证爬虫是否存在
+        spider = await SpiderLogicService.get_spider_by_id(task.spider_id, db)
+        if not spider:
+            raise ValueError(f"Spider with id {task.spider_id} not found")
+
+        # 2. 创建数据库任务对象 (这一步是同步的)
         db_task = DBTask(
-            url=task.url,
+            spider_id=task.spider_id,
             cron_expression=task.cron_expression,
             description=task.description,
         )
-        # 2. 添加到会话 (同步)
+        # 3. 添加到会话 (同步)
         db.add(db_task)
-        # 3. 提交到数据库 (异步，需要 await)
+        # 4. 提交到数据库 (异步，需要 await)
         await db.commit()
-        # 4. 刷新对象以获取自动生成的 ID (异步，需要 await)
+        # 5. 刷新对象以获取自动生成的 ID (异步，需要 await)
         await db.refresh(db_task)
 
         try:
-            # 5. 安排定时任务 (异步，需要 await)
+            # 6. 安排定时任务 (异步，需要 await)
             schedule_result = await schedule_task(
                 task_id=db_task.id,
-                url=db_task.url,
+                spider_id=task.spider_id,
                 cron_expression=db_task.cron_expression,
             )
             # 6. 更新数据库中的 job_id (如果需要的话)

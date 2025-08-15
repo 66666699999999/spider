@@ -36,10 +36,13 @@ class SpiderTarget(BaseModel):
 class Task(BaseModel):
     __tablename__ = "tasks"
 
+    id = Column(Integer, primary_key=True, index=True)
     spider_id = Column(Integer, ForeignKey("spiders.id"), index=True)
-    description = Column(String, index=True)
-    url = Column(String)
     cron_expression = Column(String)
+    description = Column(String, nullable=True)
     job_id = Column(String, nullable=True)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
+    # 外键关系: 一个任务属于一个爬虫
     spider = relationship("Spider", back_populates="tasks")

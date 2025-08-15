@@ -1,20 +1,21 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
-from pydantic import BaseModel
-
-
-class TaskCreate(BaseModel):
-    url: str
-    cron_expression: str
-    description: str = ""
+from pydantic import BaseModel, Field
 
 
-class Task(BaseModel):
+class TaskBase(BaseModel):
+    spider_id: int = Field(..., example=1)
+    cron_expression: str = Field(..., example="0 0 * * *")
+    description: Optional[str] = Field(None, example="每日运行爬虫")
+
+
+class TaskCreate(TaskBase):
+    pass
+
+
+class TaskResponse(TaskBase):
     id: int
-    url: str
-    cron_expression: str
-    description: str
     created_at: datetime
     job_id: Optional[str] = ""
 

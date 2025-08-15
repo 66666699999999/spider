@@ -28,10 +28,17 @@ class SpiderLogicService:
 
         # 根据爬虫语言类型选择不同的执行方式
         try:
+            # 为了兼容，我们仍然支持通过module_path和class_name调用自定义JS爬虫
+            # 但优先使用我们新的Puppeteer爬虫实现
             if spider.language == 'python':
                 result = await cls._run_python_spider(spider)
             elif spider.language == 'javascript':
-                result = await cls._run_javascript_spider(spider)
+                # 如果指定了module_path，则使用自定义JS爬虫
+                if spider.module_path:
+                    result = await cls._run_javascript_spider(spider)
+                else:
+                    # 否则使用默认的Puppeteer爬虫
+                    result = await cls._run_default_puppeteer_spider(spider)
             else:
                 raise ValueError(f"Unsupported spider language: {spider.language}")
 
@@ -72,17 +79,15 @@ class SpiderLogicService:
     async def _run_javascript_spider(spider: Spider) -> Dict[str, Any]:
         """运行JavaScript爬虫"""
         try:
-            config = Config()
-            config_data = config.load_file()
-
             # 获取Node.js路径
             node_path = cls._get_node_path()
 
-            # 构造命令
+            # 构造命令 - 直接调用puppeteer_spider.js并传递URL参数
+            # 假设spider.class_name存储的是要爬取的URL
             command = [
                 node_path,
-                spider.module_path,
-                spider.class_name  # 这里class_name用作入口函数名
+                os.path.join(os.path.dirname(__file__), '..', 'spider', 'puppeteer_spider.js'),
+                spider.class_name  # 这里用作URL参数
             ]
 
             logger.info(f"Running JavaScript spider command: {' '.join(command)}")
@@ -114,6 +119,51 @@ class SpiderLogicService:
         except Exception as e:
             logger.error(f"Error running JavaScript spider: {e}")
             raise ValueError(f"Error running JavaScript spider: {e}")
+
+    @staticmethod
+    async def _run_default_puppeteer_spider(spider: Spider) -> Dict[str, Any]:
+        """运行默认的Puppeteer爬虫"""
+        try:
+            # 获取Node.js路径
+            node_path = cls._get_node_path()
+
+            # 构造命令 - 调用puppeteer_spider.js并传递URL参数
+            # 假设spider.name存储的是要爬取的URL
+            command = [
+                node_path,
+                os.path.join(os.path.dirname(__file__), '..', 'spider', 'puppeteer_spider.js'),
+                spider.name  # 使用爬虫名称作为URL
+            ]
+
+            logger.info(f"Running default Puppeteer spider command: {' '.join(command)}")
+
+            # 运行命令
+            process = await subprocess.create_subprocess_exec(
+                *command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+
+            # 获取输出
+            stdout, stderr = await process.communicate()
+
+            if process.returncode != 0:
+                error_msg = stderr.decode('utf-8', errors='replace').strip()
+                logger.error(f"Puppeteer spider error: {error_msg}")
+                raise ValueError(f"Puppeteer spider failed: {error_msg}")
+
+            # 解析输出
+            result_str = stdout.decode('utf-8', errors='replace').strip()
+            try:
+                import json
+                result = json.loads(result_str)
+                return result
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse Puppeteer spider output: {result_str}")
+                raise ValueError(f"Failed to parse Puppeteer spider output")
+        except Exception as e:
+            logger.error(f"Error running Puppeteer spider: {e}")
+            raise ValueError(f"Error running Puppeteer spider: {e}")
 
     @staticmethod
     def _get_node_path() -> str:

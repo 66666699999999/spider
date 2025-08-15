@@ -21,3 +21,4 @@ tests/
 database_ssh.py
 .ruff_cache/
 .pytest_cache/
+test.sh
