@@ -15,12 +15,12 @@ from app.services.task_service import get_running_tasks
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
-@router.get("/running", response_model=List[Dict[str, Any]])
+@router.get("/running", response_model=Dict[str, Any])
 async def get_running_tasks_endpoint():
     """获取正在运行的定时任务
 
     Returns:
-        正在运行的任务列表
+        包含正在运行的任务数量和任务列表的字典
     """
     return get_running_tasks()
 
@@ -28,7 +28,7 @@ async def get_running_tasks_endpoint():
 # 同时支持带和不带斜杠的URL格式
 @router.get("/")
 @router.get("", include_in_schema=False)
-async def list_tasks(db: Session = Depends(get_db)) -> List[Task]:
+async def list_tasks(db: Session = Depends(get_db)) -> List[TaskResponse]:
     """获取所有定时任务列表"""
     tasks = await TaskLogicService.get_all_tasks(db)
     return tasks
@@ -66,7 +66,7 @@ async def create_task(
 
 
 @router.get("/{task_id}")
-async def get_task(task_id: int, db: Session = Depends(get_db)) -> Task:
+async def get_task(task_id: int, db: Session = Depends(get_db)) -> TaskResponse:
     """获取指定ID的定时任务"""
     task = await TaskLogicService.get_task_by_id(task_id, db)
     if not task:

@@ -20,8 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装Node.js
-RUN wget -qO- https://deb.nodesource.com/setup_18.x | bash -
-RUN apt-get install -y nodejs
+RUN wget -qO- https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
 
 # 安装Puppeteer依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -64,18 +64,21 @@ RUN if [ ! -f app/config/config.toml ]; then \
 
 # 生成加密密钥（首次运行时）
 RUN python <<EOF
-import os; 
-from cryptography.fernet import Fernet; 
-key_path = 'app/config/secret.key'; 
-if not os.path.exists(key_path): 
-    with open(key_path, 'wb') as f: 
-        f.write(Fernet.generate_key()); 
-    os.chmod(key_path, 0o600); 
-print('Encryption key generated or exists')
+import os
+from cryptography.fernet import Fernet
+
+key_path = 'app/config/secret.key'
+if not os.path.exists(key_path):
+    with open(key_path, 'wb') as f:
+        f.write(Fernet.generate_key())
+    os.chmod(key_path, 0o600)
+    print('Encryption key generated')
+else:
+    print('Encryption key already exists')
 EOF
 
 # 暴露端口
 EXPOSE 8000
 
 # 启动命令
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload=False"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
