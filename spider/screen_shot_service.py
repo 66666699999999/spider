@@ -12,10 +12,12 @@ from app.config.load_config import Config
 class ScreenShotSpider:
     def __init__(self):
         self.config = Config()
-        self.config_data = self.config.load_file()
 
     def load_cookie(self) -> List[Dict[str, Any]]:
-        cookie_path = self.config.ROOT_PATH / self.config_data["paths"]["cookie"]
+        cookie_path = (
+            self.config.BASE_DIR / "public" / "cookie" / "x.com_json_1755533995907.json"
+        )
+
         try:
             with open(cookie_path, "r", encoding="utf-8") as f:
                 cookies = json.load(f)
@@ -68,9 +70,8 @@ class ScreenShotSpider:
 
                 # 截取目标article的截图
                 target = page.locator("article").first
-                screenshot_dir = (
-                    self.config.ROOT_PATH / self.config_data["paths"]["screenshot"]
-                )
+                screenshot_dir = self.config.BASE_DIR / "public" / "pic"
+
                 screenshot_dir.mkdir(parents=True, exist_ok=True)
                 screenshot_path = screenshot_dir / f"{int(time.time())}.png"
                 await target.screenshot(path=str(screenshot_path), type="png")
@@ -94,3 +95,7 @@ class ScreenShotSpider:
 async def main(url: str) -> None:
     spider = ScreenShotSpider()
     await spider.run(url)
+
+
+if __name__ == "__main__":
+    asyncio.run(main("https://x.com/leeoxiang/status/1778304537973203120"))

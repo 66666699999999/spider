@@ -17,11 +17,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     gnupg \
     ca-certificates \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装Node.js
-RUN wget -qO- https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
 
 # 安装Puppeteer依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -43,6 +45,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libatspi2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
+
 # 安装Poetry
 RUN pip install --upgrade pip && \
     pip install "poetry==$POETRY_VERSION"
@@ -50,32 +53,36 @@ RUN pip install --upgrade pip && \
 # 配置Poetry不创建虚拟环境
 RUN poetry config virtualenvs.create false
 
-# 如果没有poetry.lock文件，则使用requirements.txt
+# 复制依赖文件
 COPY requirements.txt .
+COPY package.json package-lock.json* ./
+
+# 安装Python依赖
 RUN pip install -r requirements.txt
+
+# 处理npm依赖 - 预防ENOTEMPTY错误
+RUN if [ -f "package.json" ]; then \
+        rm -rf node_modules package-lock.json 2>/dev/null || true; \
+        npm cache clean --force; \
+        npm ci --prefer-offline --no-audit --no-fund --quiet || \
+        (npm install --prefer-offline --no-audit --no-fund --quiet; exit 0); \
+    fi
 
 # 复制项目代码
 COPY . .
 
 # 创建配置文件（如果不存在）
-RUN if [ ! -f app/config/config.toml ]; then \
-        cp app/config/config.example.toml app/config/config.toml; \
-    fi
+#RUN if [ ! -f app/config/config.toml ]; then \
+#        cp app/config/config.example.toml app/config/config.toml; \
+#    fi
 
 # 生成加密密钥（首次运行时）
 RUN python <<EOF
 import os
 from cryptography.fernet import Fernet
 
-key_path = 'app/config/secret.key'
-if not os.path.exists(key_path):
-    with open(key_path, 'wb') as f:
-        f.write(Fernet.generate_key())
-    os.chmod(key_path, 0o600)
-    print('Encryption key generated')
-else:
-    print('Encryption key already exists')
-EOF
+# 设置权限避免npm问题
+#RUN find . -type d -name "node_modules" -exec chmod -R 755 {} \; 2>/dev/null || true
 
 # 暴露端口
 EXPOSE 8000

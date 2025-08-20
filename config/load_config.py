@@ -24,6 +24,7 @@ class Config:
         # 避免重复初始化
         if not hasattr(self, "initialized"):
             self.BASE_DIR = Path(__file__).resolve().parent.parent
+
             self._load_config()
             self.initialized = True
 
@@ -114,3 +115,5 @@ def get_config_instance() -> Config:
 
 # 初始化时自动加载配置
 _config_instance.reload()
+
+print(_config_instance.BASE_DIR)

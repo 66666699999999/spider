@@ -1,4 +1,5 @@
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String,
+                        func)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -21,7 +22,7 @@ class Spider(BaseModel):
     module_path = Column(String)
     class_name = Column(String)
     is_active = Column(Boolean, default=True)
-    language = Column(String, default='python')
+    language = Column(String, default="python")
 
     tasks = relationship("Task", back_populates="spider")
 

@@ -10,7 +10,9 @@ class SpiderBase(BaseModel):
     module_path: str = Field(..., description="爬虫模块路径")
     class_name: str = Field(..., description="爬虫类名")
     is_active: bool = Field(True, description="是否激活")
-    language: str = Field('python', description="爬虫语言类型，支持 'python' 和 'javascript'")
+    language: str = Field(
+        "python", description="爬虫语言类型，支持 'python' 和 'javascript'"
+    )
 
 
 class SpiderCreate(SpiderBase):
@@ -27,7 +29,9 @@ class SpiderUpdate(BaseModel):
     module_path: Optional[str] = Field(None, description="爬虫模块路径")
     class_name: Optional[str] = Field(None, description="爬虫类名")
     is_active: Optional[bool] = Field(None, description="是否激活")
-    language: Optional[str] = Field(None, description="爬虫语言类型，支持 'python' 和 'javascript'")
+    language: Optional[str] = Field(
+        None, description="爬虫语言类型，支持 'python' 和 'javascript'"
+    )
 
 
 class SpiderResponse(SpiderBase):

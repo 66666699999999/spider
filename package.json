@@ -2,12 +2,13 @@
   "name": "spider-app",
   "version": "1.0.0",
   "description": "Node.js Puppeteer spider",
+  "type": "module",
   "main": "app/spider/puppeteer_spider.js",
   "scripts": {
-    "start": "node app/spider/puppeteer_spider.js"
+    "start": "node spider/puppeteer_spider.js"
   },
   "dependencies": {
-    "puppeteer": "^21.0.0",
+    "puppeteer": "^24.9.0",
     "toml": "^3.0.0"
   },
   "author": "",

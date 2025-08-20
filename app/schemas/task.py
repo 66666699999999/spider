@@ -14,8 +14,15 @@ class TaskCreate(TaskBase):
     pass
 
 
+class TaskCreate(TaskBase):
+    pass
+
+
 class TaskResponse(TaskBase):
     id: int
+    spider_id: int
+    cron_expression: str
+    description: Optional[str] = None
     created_at: datetime
     job_id: Optional[str] = ""
 

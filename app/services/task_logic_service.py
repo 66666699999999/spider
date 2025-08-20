@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession  # 导入 AsyncSession 类型提
 
 # --- 内部导入 ---
 from app.database.models import Task as DBTask  # 确保模型导入正确
-from app.services.spider_logic_service import SpiderLogicService
 from app.schemas.task import TaskCreate  # 确保 Pydantic 模型导入正确
+from app.services.spider_logic_service import SpiderLogicService
 from app.services.task_service import remove_task, schedule_task  # 确保调度服务导入正确
 
 # --- 配置 ---

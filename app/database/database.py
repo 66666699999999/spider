@@ -9,10 +9,11 @@ from urllib.parse import urlparse
 from cryptography.fernet import Fernet
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 from sqlalchemy.orm import DeclarativeBase, declared_attr
 
-from app.config.load_config import get_config, get_setting
+from config.load_config import get_config, get_setting
 
 # --- 日志配置 ---
 logger = logging.getLogger(__name__)
@@ -116,16 +117,36 @@ class DatabaseManager:
 
         return self._get_db_session()
 
-    async def _get_db_session(self):
-        """内部方法：获取数据库会话"""
+    async def _get_db_session(self) -> AsyncGenerator[AsyncSession, None]:
+        """
+        内部方法：作为异步生成器提供数据库会话。
+        确保 session 的获取、使用和清理完全由 async with 控制。
+        """
+        # 使用 session factory 创建 session 上下文
         async with self.async_session() as session:
             try:
+                logger.debug("Database session acquired")
+                # yield session 给依赖它的代码使用
                 yield session
-                await session.commit()
+                # 如果代码正常执行到这里，提交事务
+                # 注意：如果 session.autocommit=False (推荐)，你需要显式 commit
+                # 如果你希望在每次请求后自动提交，可以保留这行
+                # 但更常见的是在业务逻辑中根据需要提交
+                # await session.commit() # --- 可选：根据业务逻辑决定 ---
+                logger.debug("Database session will be committed")
             except Exception as e:
-                await session.rollback()
-                logger.error(f"Database session error: {e}")
+                # 如果在使用 session 时发生任何错误，回滚事务
+                logger.error(f"Database session error, rolling back: {e}")
+                # session.rollback() 通常在 close 时由 async with 自动处理
+                # 但显式回滚更清晰，尤其是在需要区分回滚和关闭原因时
+                # await session.rollback() # --- 可选：显式回滚 ---
+                # 重新抛出异常，让上层处理
                 raise
+            # 当 async with 块结束时 (无论是正常结束还是因异常退出)，
+            # session.close() 会被自动调用 (通过 session.__aexit__),
+            # 这会正确地关闭连接并将其返回给连接池，
+            # 从而避免 IllegalStateChangeError。
+            # finally 块通常不需要，因为 async with 会处理清理
 
     def _obfuscate_url(self, url):
         """混淆URL中的敏感信息"""
@@ -142,8 +163,8 @@ db_manager = DatabaseManager()
 # --- 依赖项 ---
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """FastAPI依赖项，获取数据库会话"""
-    async for db in db_manager.get_db():
-        yield db
+    async for session in db_manager.get_db():
+        yield session
 
 
 # --- Lifespan管理器 ---
