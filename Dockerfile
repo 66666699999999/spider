@@ -76,11 +76,6 @@ COPY . .
 #        cp app/config/config.example.toml app/config/config.toml; \
 #    fi
 
-# 生成加密密钥（首次运行时）
-RUN python <<EOF
-import os
-from cryptography.fernet import Fernet
-
 # 设置权限避免npm问题
 #RUN find . -type d -name "node_modules" -exec chmod -R 755 {} \; 2>/dev/null || true
 
