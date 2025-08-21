@@ -1,7 +1,7 @@
 import importlib
 import logging
 import os
-import subprocess
+import asyncio
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import func, select
@@ -120,7 +120,7 @@ class SpiderLogicService:
             logger.info(f"Running JavaScript spider command: {' '.join(command)}")
 
             # 运行命令
-            process = await subprocess.create_subprocess_exec(
+            process = await asyncio.create_subprocess_exec(
                 *command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
 
@@ -168,7 +168,7 @@ class SpiderLogicService:
             )
 
             # 运行命令
-            process = await subprocess.create_subprocess_exec(
+            process = await asyncio.create_subprocess_exec(
                 *command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
 
